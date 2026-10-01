@@ -9,4 +9,6 @@ tmp_dir = "tmp"
   delay = 500
   stop_on_error = true
   send_interrupt = true
-  kill_delay = "3s"
+  # Longer than the API's 8s shutdown timeout, so a restart lets in-flight
+  # calls drain. An idle API exits at once, so reloads are no slower.
+  kill_delay = "9s"

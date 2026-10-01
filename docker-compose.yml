@@ -25,6 +25,9 @@ services:
     build:
       context: ./backend
     container_name: articles_api
+    # Time between SIGTERM and SIGKILL. Must exceed the API's own 8s shutdown
+    # timeout, or in-flight calls are killed before they can drain.
+    stop_grace_period: 10s
     environment:
       QUEUE_ENDPOINT: http://elasticmq:9324
       QUEUE_URL: http://elasticmq:9324/000000000000/article-status-changes
