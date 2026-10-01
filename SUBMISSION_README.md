@@ -119,9 +119,25 @@ harmless.
 ### Write-then-publish ordering
 
 Within one transaction the API locks the row, inserts the request, publishes the
-message and then commits. If publishing fails, the transaction rolls back, so
-there is no phantom "pending" state for a message that was never sent, and the
-editor gets a clear "could not send, try again" (`Unavailable`).
+message and then commits. If publishing fails, the transaction rolls back and
+the editor is told "could not send, try again" (`Unavailable`).
+
+**Known issue: a timed-out send may still be delivered.** I found this while
+testing graceful shutdown. With the queue paused, the publish timed out after
+5s, so the API rolled back and reported failure. Once the queue resumed, all
+four of those "failed" messages were delivered and applied. A timeout means
+*we don't know* whether the message was sent, not that it wasn't. So:
+
+- the editor is told it failed, but the change applies anyway;
+- the record was rolled back, so the page never shows it as pending, and the
+  badge just flips later with no explanation.
+
+**The fix I would make:** on a send error, keep the request instead of rolling
+back, and tell the editor "we couldn't confirm the change was sent, it may
+still apply". The existing design then handles it honestly: it shows as
+pending, the badge flips if the change lands, and it becomes overdue with a
+retry if it never does. It is a small change. I left it so I could finish and
+document the Part two work.
 
 ### How the UI refreshes
 
