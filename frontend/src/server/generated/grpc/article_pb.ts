@@ -2,8 +2,8 @@
 // @generated from file article.proto (package sliide.services.articles.api, edition 2023)
 /* eslint-disable */
 
-import type { GenFile, GenMessage } from "@bufbuild/protobuf/codegenv2";
-import { fileDesc, messageDesc } from "@bufbuild/protobuf/codegenv2";
+import type { GenEnum, GenFile, GenMessage } from "@bufbuild/protobuf/codegenv2";
+import { enumDesc, fileDesc, messageDesc } from "@bufbuild/protobuf/codegenv2";
 import type { Timestamp } from "@bufbuild/protobuf/wkt";
 import { file_google_protobuf_timestamp } from "@bufbuild/protobuf/wkt";
 import type { Message } from "@bufbuild/protobuf";
@@ -12,7 +12,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file article.proto.
  */
 export const file_article: GenFile = /*@__PURE__*/
-  fileDesc("Cg1hcnRpY2xlLnByb3RvEhxzbGlpZGUuc2VydmljZXMuYXJ0aWNsZXMuYXBpIr8BCgdBcnRpY2xlEgoKAmlkGAEgASgJEg0KBXRpdGxlGAIgASgJEg8KB3N1bW1hcnkYAyABKAkSEgoKaW1hZ2VfcGF0aBgEIAEoCRIOCgZhdXRob3IYBSABKAkSDgoGc291cmNlGAYgASgJEhAKCGNhdGVnb3J5GAcgASgJEjAKDHB1Ymxpc2hlZF9hdBgIIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASEAoIZGlzYWJsZWQYCSABKAgiVgoOQXJ0aWNsZURldGFpbHMSNgoHYXJ0aWNsZRgBIAEoCzIlLnNsaWlkZS5zZXJ2aWNlcy5hcnRpY2xlcy5hcGkuQXJ0aWNsZRIMCgRib2R5GAIgASgJQkFaP2dpdGh1Yi5jb20vc2xpaWRlL2FydGljbGVzLWJhY2tlbmQvcGtnL2FydGljbGVzL2FwaTthcnRpY2xlc2FwaWIIZWRpdGlvbnNw6Ac", [file_google_protobuf_timestamp]);
+  fileDesc("Cg1hcnRpY2xlLnByb3RvEhxzbGlpZGUuc2VydmljZXMuYXJ0aWNsZXMuYXBpIoMCCgdBcnRpY2xlEgoKAmlkGAEgASgJEg0KBXRpdGxlGAIgASgJEg8KB3N1bW1hcnkYAyABKAkSEgoKaW1hZ2VfcGF0aBgEIAEoCRIOCgZhdXRob3IYBSABKAkSDgoGc291cmNlGAYgASgJEhAKCGNhdGVnb3J5GAcgASgJEjAKDHB1Ymxpc2hlZF9hdBgIIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASEAoIZGlzYWJsZWQYCSABKAgSQgoOcGVuZGluZ19jaGFuZ2UYCiABKAsyKi5zbGlpZGUuc2VydmljZXMuYXJ0aWNsZXMuYXBpLlN0YXR1c0NoYW5nZSLVAQoMU3RhdHVzQ2hhbmdlEhAKCHRyYWNlX2lkGAEgASgJEkEKBmFjdGlvbhgCIAEoDjIxLnNsaWlkZS5zZXJ2aWNlcy5hcnRpY2xlcy5hcGkuQXJ0aWNsZVN0YXR1c0FjdGlvbhIwCgxyZXF1ZXN0ZWRfYXQYAyABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEj4KBXN0YXRlGAQgASgOMi8uc2xpaWRlLnNlcnZpY2VzLmFydGljbGVzLmFwaS5TdGF0dXNDaGFuZ2VTdGF0ZSJWCg5BcnRpY2xlRGV0YWlscxI2CgdhcnRpY2xlGAEgASgLMiUuc2xpaWRlLnNlcnZpY2VzLmFydGljbGVzLmFwaS5BcnRpY2xlEgwKBGJvZHkYAiABKAkqgQEKE0FydGljbGVTdGF0dXNBY3Rpb24SJQohQVJUSUNMRV9TVEFUVVNfQUNUSU9OX1VOU1BFQ0lGSUVEEAASIQodQVJUSUNMRV9TVEFUVVNfQUNUSU9OX0RJU0FCTEUQARIgChxBUlRJQ0xFX1NUQVRVU19BQ1RJT05fRU5BQkxFEAIqegoRU3RhdHVzQ2hhbmdlU3RhdGUSIwofU1RBVFVTX0NIQU5HRV9TVEFURV9VTlNQRUNJRklFRBAAEh8KG1NUQVRVU19DSEFOR0VfU1RBVEVfUEVORElORxABEh8KG1NUQVRVU19DSEFOR0VfU1RBVEVfT1ZFUkRVRRACQkFaP2dpdGh1Yi5jb20vc2xpaWRlL2FydGljbGVzLWJhY2tlbmQvcGtnL2FydGljbGVzL2FwaTthcnRpY2xlc2FwaWIIZWRpdGlvbnNw6Ac", [file_google_protobuf_timestamp]);
 
 /**
  * Article is the list-shaped view of an article. It deliberately omits the
@@ -72,6 +72,15 @@ export type Article = Message<"sliide.services.articles.api.Article"> & {
    * @generated from field: bool disabled = 9;
    */
   disabled: boolean;
+
+  /**
+   * Set while an editor's most recent status change has been requested but
+   * not yet applied. Unset when there is no request, or the latest one has
+   * landed.
+   *
+   * @generated from field: sliide.services.articles.api.StatusChange pending_change = 10;
+   */
+  pendingChange?: StatusChange | undefined;
 };
 
 /**
@@ -80,6 +89,44 @@ export type Article = Message<"sliide.services.articles.api.Article"> & {
  */
 export const ArticleSchema: GenMessage<Article> = /*@__PURE__*/
   messageDesc(file_article, 0);
+
+/**
+ * A status change an editor asked for. Being accepted only means the change
+ * was published to the queue, not that it has been applied.
+ *
+ * @generated from message sliide.services.articles.api.StatusChange
+ */
+export type StatusChange = Message<"sliide.services.articles.api.StatusChange"> & {
+  /**
+   * Also the trace_id on the queue message, so one change can be followed
+   * through our logs and the consumer's.
+   *
+   * @generated from field: string trace_id = 1;
+   */
+  traceId: string;
+
+  /**
+   * @generated from field: sliide.services.articles.api.ArticleStatusAction action = 2;
+   */
+  action: ArticleStatusAction;
+
+  /**
+   * @generated from field: google.protobuf.Timestamp requested_at = 3;
+   */
+  requestedAt?: Timestamp | undefined;
+
+  /**
+   * @generated from field: sliide.services.articles.api.StatusChangeState state = 4;
+   */
+  state: StatusChangeState;
+};
+
+/**
+ * Describes the message sliide.services.articles.api.StatusChange.
+ * Use `create(StatusChangeSchema)` to create a new message.
+ */
+export const StatusChangeSchema: GenMessage<StatusChange> = /*@__PURE__*/
+  messageDesc(file_article, 1);
 
 /**
  * @generated from message sliide.services.articles.api.ArticleDetails
@@ -101,5 +148,64 @@ export type ArticleDetails = Message<"sliide.services.articles.api.ArticleDetail
  * Use `create(ArticleDetailsSchema)` to create a new message.
  */
 export const ArticleDetailsSchema: GenMessage<ArticleDetails> = /*@__PURE__*/
-  messageDesc(file_article, 1);
+  messageDesc(file_article, 2);
+
+/**
+ * @generated from enum sliide.services.articles.api.ArticleStatusAction
+ */
+export enum ArticleStatusAction {
+  /**
+   * @generated from enum value: ARTICLE_STATUS_ACTION_UNSPECIFIED = 0;
+   */
+  UNSPECIFIED = 0,
+
+  /**
+   * @generated from enum value: ARTICLE_STATUS_ACTION_DISABLE = 1;
+   */
+  DISABLE = 1,
+
+  /**
+   * @generated from enum value: ARTICLE_STATUS_ACTION_ENABLE = 2;
+   */
+  ENABLE = 2,
+}
+
+/**
+ * Describes the enum sliide.services.articles.api.ArticleStatusAction.
+ */
+export const ArticleStatusActionSchema: GenEnum<ArticleStatusAction> = /*@__PURE__*/
+  enumDesc(file_article, 0);
+
+/**
+ * @generated from enum sliide.services.articles.api.StatusChangeState
+ */
+export enum StatusChangeState {
+  /**
+   * @generated from enum value: STATUS_CHANGE_STATE_UNSPECIFIED = 0;
+   */
+  UNSPECIFIED = 0,
+
+  /**
+   * Accepted and published, and still within the time the queue would
+   * normally take to apply it.
+   *
+   * @generated from enum value: STATUS_CHANGE_STATE_PENDING = 1;
+   */
+  PENDING = 1,
+
+  /**
+   * Accepted, but not applied within the expected time. It may have been
+   * dead-lettered, or overtaken by an out-of-order delivery. A new request is
+   * allowed.
+   *
+   * @generated from enum value: STATUS_CHANGE_STATE_OVERDUE = 2;
+   */
+  OVERDUE = 2,
+}
+
+/**
+ * Describes the enum sliide.services.articles.api.StatusChangeState.
+ */
+export const StatusChangeStateSchema: GenEnum<StatusChangeState> = /*@__PURE__*/
+  enumDesc(file_article, 1);
 

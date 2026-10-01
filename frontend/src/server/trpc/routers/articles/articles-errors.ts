@@ -5,6 +5,7 @@ const codeMap: Partial<Record<Code, TRPCError['code']>> = {
   [Code.InvalidArgument]: 'BAD_REQUEST',
   [Code.NotFound]: 'NOT_FOUND',
   [Code.AlreadyExists]: 'CONFLICT',
+  [Code.FailedPrecondition]: 'PRECONDITION_FAILED',
   [Code.PermissionDenied]: 'FORBIDDEN',
   [Code.Unauthenticated]: 'UNAUTHORIZED',
   [Code.DeadlineExceeded]: 'TIMEOUT',

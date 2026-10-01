@@ -3,6 +3,7 @@ import { createFileRoute, Link } from '@tanstack/react-router';
 
 import { formatPublished } from '@client/lib/format';
 import { imageUrl } from '@client/lib/image';
+import { refetchWhilePending } from '@client/lib/status-change';
 import { useTRPC } from '@client/trpc';
 import { StatusBadge } from './-components/status-badge';
 
@@ -16,7 +17,10 @@ export const Route = createFileRoute('/')({
 
 function ArticleList() {
   const trpc = useTRPC();
-  const { data: articles } = useSuspenseQuery(trpc.articles.getArticles.queryOptions());
+  const { data: articles } = useSuspenseQuery({
+    ...trpc.articles.getArticles.queryOptions(),
+    refetchInterval: (query) => refetchWhilePending(query.state.data),
+  });
 
   return (
     <>
@@ -42,7 +46,7 @@ function ArticleList() {
               <div className="min-w-0 flex-1">
                 <div className="flex items-start gap-3">
                   <h2 className="flex-1 font-medium">{article.title}</h2>
-                  <StatusBadge disabled={article.disabled} />
+                  <StatusBadge disabled={article.disabled} pendingChange={article.pendingChange} />
                 </div>
                 <p className="mt-1 line-clamp-2 text-sm text-slate-600">{article.summary}</p>
                 <p className="mt-1.5 text-xs text-slate-500">
