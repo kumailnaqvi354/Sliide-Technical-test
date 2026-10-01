@@ -19,8 +19,9 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	ArticleAPI_GetArticles_FullMethodName       = "/sliide.services.articles.api.ArticleAPI/GetArticles"
-	ArticleAPI_GetArticleDetails_FullMethodName = "/sliide.services.articles.api.ArticleAPI/GetArticleDetails"
+	ArticleAPI_GetArticles_FullMethodName                = "/sliide.services.articles.api.ArticleAPI/GetArticles"
+	ArticleAPI_GetArticleDetails_FullMethodName          = "/sliide.services.articles.api.ArticleAPI/GetArticleDetails"
+	ArticleAPI_RequestArticleStatusChange_FullMethodName = "/sliide.services.articles.api.ArticleAPI/RequestArticleStatusChange"
 )
 
 // ArticleAPIClient is the client API for ArticleAPI service.
@@ -29,6 +30,14 @@ const (
 type ArticleAPIClient interface {
 	GetArticles(ctx context.Context, in *GetArticlesRequest, opts ...grpc.CallOption) (*GetArticlesResponse, error)
 	GetArticleDetails(ctx context.Context, in *GetArticleDetailsRequest, opts ...grpc.CallOption) (*GetArticleDetailsResponse, error)
+	// Asks for an article to be disabled or enabled. The change is applied
+	// asynchronously by another service, so success means only that it was
+	// accepted: watch Article.pending_change to see it land.
+	//
+	// Returns the pending change unchanged if the same action is already in
+	// flight. Fails with FAILED_PRECONDITION if the article is already in the
+	// requested state, or the opposite change is still pending.
+	RequestArticleStatusChange(ctx context.Context, in *RequestArticleStatusChangeRequest, opts ...grpc.CallOption) (*RequestArticleStatusChangeResponse, error)
 }
 
 type articleAPIClient struct {
@@ -59,12 +68,30 @@ func (c *articleAPIClient) GetArticleDetails(ctx context.Context, in *GetArticle
 	return out, nil
 }
 
+func (c *articleAPIClient) RequestArticleStatusChange(ctx context.Context, in *RequestArticleStatusChangeRequest, opts ...grpc.CallOption) (*RequestArticleStatusChangeResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(RequestArticleStatusChangeResponse)
+	err := c.cc.Invoke(ctx, ArticleAPI_RequestArticleStatusChange_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ArticleAPIServer is the server API for ArticleAPI service.
 // All implementations must embed UnimplementedArticleAPIServer
 // for forward compatibility.
 type ArticleAPIServer interface {
 	GetArticles(context.Context, *GetArticlesRequest) (*GetArticlesResponse, error)
 	GetArticleDetails(context.Context, *GetArticleDetailsRequest) (*GetArticleDetailsResponse, error)
+	// Asks for an article to be disabled or enabled. The change is applied
+	// asynchronously by another service, so success means only that it was
+	// accepted: watch Article.pending_change to see it land.
+	//
+	// Returns the pending change unchanged if the same action is already in
+	// flight. Fails with FAILED_PRECONDITION if the article is already in the
+	// requested state, or the opposite change is still pending.
+	RequestArticleStatusChange(context.Context, *RequestArticleStatusChangeRequest) (*RequestArticleStatusChangeResponse, error)
 	mustEmbedUnimplementedArticleAPIServer()
 }
 
@@ -80,6 +107,9 @@ func (UnimplementedArticleAPIServer) GetArticles(context.Context, *GetArticlesRe
 }
 func (UnimplementedArticleAPIServer) GetArticleDetails(context.Context, *GetArticleDetailsRequest) (*GetArticleDetailsResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetArticleDetails not implemented")
+}
+func (UnimplementedArticleAPIServer) RequestArticleStatusChange(context.Context, *RequestArticleStatusChangeRequest) (*RequestArticleStatusChangeResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method RequestArticleStatusChange not implemented")
 }
 func (UnimplementedArticleAPIServer) mustEmbedUnimplementedArticleAPIServer() {}
 func (UnimplementedArticleAPIServer) testEmbeddedByValue()                    {}
@@ -138,6 +168,24 @@ func _ArticleAPI_GetArticleDetails_Handler(srv interface{}, ctx context.Context,
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ArticleAPI_RequestArticleStatusChange_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RequestArticleStatusChangeRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ArticleAPIServer).RequestArticleStatusChange(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ArticleAPI_RequestArticleStatusChange_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ArticleAPIServer).RequestArticleStatusChange(ctx, req.(*RequestArticleStatusChangeRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // ArticleAPI_ServiceDesc is the grpc.ServiceDesc for ArticleAPI service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -152,6 +200,10 @@ var ArticleAPI_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetArticleDetails",
 			Handler:    _ArticleAPI_GetArticleDetails_Handler,
+		},
+		{
+			MethodName: "RequestArticleStatusChange",
+			Handler:    _ArticleAPI_RequestArticleStatusChange_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

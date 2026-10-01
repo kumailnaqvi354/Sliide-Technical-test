@@ -26,6 +26,41 @@ message Article {
   // asynchronously, so it reflects the last state that was applied, not
   // necessarily the most recent request.
   bool disabled = 9;
+
+  // Set while an editor's most recent status change has been requested but
+  // not yet applied. Unset when there is no request, or the latest one has
+  // landed.
+  StatusChange pending_change = 10;
+}
+
+enum ArticleStatusAction {
+  ARTICLE_STATUS_ACTION_UNSPECIFIED = 0;
+  ARTICLE_STATUS_ACTION_DISABLE = 1;
+  ARTICLE_STATUS_ACTION_ENABLE = 2;
+}
+
+enum StatusChangeState {
+  STATUS_CHANGE_STATE_UNSPECIFIED = 0;
+
+  // Accepted and published, and still within the time the queue would
+  // normally take to apply it.
+  STATUS_CHANGE_STATE_PENDING = 1;
+
+  // Accepted, but not applied within the expected time. It may have been
+  // dead-lettered, or overtaken by an out-of-order delivery. A new request is
+  // allowed.
+  STATUS_CHANGE_STATE_OVERDUE = 2;
+}
+
+// A status change an editor asked for. Being accepted only means the change
+// was published to the queue, not that it has been applied.
+message StatusChange {
+  // Also the trace_id on the queue message, so one change can be followed
+  // through our logs and the consumer's.
+  string trace_id = 1;
+  ArticleStatusAction action = 2;
+  google.protobuf.Timestamp requested_at = 3;
+  StatusChangeState state = 4;
 }
 
 message ArticleDetails {

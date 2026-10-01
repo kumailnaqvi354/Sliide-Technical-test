@@ -22,6 +22,109 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+type ArticleStatusAction int32
+
+const (
+	ArticleStatusAction_ARTICLE_STATUS_ACTION_UNSPECIFIED ArticleStatusAction = 0
+	ArticleStatusAction_ARTICLE_STATUS_ACTION_DISABLE     ArticleStatusAction = 1
+	ArticleStatusAction_ARTICLE_STATUS_ACTION_ENABLE      ArticleStatusAction = 2
+)
+
+// Enum value maps for ArticleStatusAction.
+var (
+	ArticleStatusAction_name = map[int32]string{
+		0: "ARTICLE_STATUS_ACTION_UNSPECIFIED",
+		1: "ARTICLE_STATUS_ACTION_DISABLE",
+		2: "ARTICLE_STATUS_ACTION_ENABLE",
+	}
+	ArticleStatusAction_value = map[string]int32{
+		"ARTICLE_STATUS_ACTION_UNSPECIFIED": 0,
+		"ARTICLE_STATUS_ACTION_DISABLE":     1,
+		"ARTICLE_STATUS_ACTION_ENABLE":      2,
+	}
+)
+
+func (x ArticleStatusAction) Enum() *ArticleStatusAction {
+	p := new(ArticleStatusAction)
+	*p = x
+	return p
+}
+
+func (x ArticleStatusAction) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (ArticleStatusAction) Descriptor() protoreflect.EnumDescriptor {
+	return file_article_proto_enumTypes[0].Descriptor()
+}
+
+func (ArticleStatusAction) Type() protoreflect.EnumType {
+	return &file_article_proto_enumTypes[0]
+}
+
+func (x ArticleStatusAction) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use ArticleStatusAction.Descriptor instead.
+func (ArticleStatusAction) EnumDescriptor() ([]byte, []int) {
+	return file_article_proto_rawDescGZIP(), []int{0}
+}
+
+type StatusChangeState int32
+
+const (
+	StatusChangeState_STATUS_CHANGE_STATE_UNSPECIFIED StatusChangeState = 0
+	// Accepted and published, and still within the time the queue would
+	// normally take to apply it.
+	StatusChangeState_STATUS_CHANGE_STATE_PENDING StatusChangeState = 1
+	// Accepted, but not applied within the expected time. It may have been
+	// dead-lettered, or overtaken by an out-of-order delivery. A new request is
+	// allowed.
+	StatusChangeState_STATUS_CHANGE_STATE_OVERDUE StatusChangeState = 2
+)
+
+// Enum value maps for StatusChangeState.
+var (
+	StatusChangeState_name = map[int32]string{
+		0: "STATUS_CHANGE_STATE_UNSPECIFIED",
+		1: "STATUS_CHANGE_STATE_PENDING",
+		2: "STATUS_CHANGE_STATE_OVERDUE",
+	}
+	StatusChangeState_value = map[string]int32{
+		"STATUS_CHANGE_STATE_UNSPECIFIED": 0,
+		"STATUS_CHANGE_STATE_PENDING":     1,
+		"STATUS_CHANGE_STATE_OVERDUE":     2,
+	}
+)
+
+func (x StatusChangeState) Enum() *StatusChangeState {
+	p := new(StatusChangeState)
+	*p = x
+	return p
+}
+
+func (x StatusChangeState) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (StatusChangeState) Descriptor() protoreflect.EnumDescriptor {
+	return file_article_proto_enumTypes[1].Descriptor()
+}
+
+func (StatusChangeState) Type() protoreflect.EnumType {
+	return &file_article_proto_enumTypes[1]
+}
+
+func (x StatusChangeState) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use StatusChangeState.Descriptor instead.
+func (StatusChangeState) EnumDescriptor() ([]byte, []int) {
+	return file_article_proto_rawDescGZIP(), []int{1}
+}
+
 // Article is the list-shaped view of an article. It deliberately omits the
 // body, which is only served by GetArticleDetails.
 type Article struct {
@@ -39,7 +142,11 @@ type Article struct {
 	// Disabled articles are not served to users. The flag is applied
 	// asynchronously, so it reflects the last state that was applied, not
 	// necessarily the most recent request.
-	Disabled      *bool `protobuf:"varint,9,opt,name=disabled" json:"disabled,omitempty"`
+	Disabled *bool `protobuf:"varint,9,opt,name=disabled" json:"disabled,omitempty"`
+	// Set while an editor's most recent status change has been requested but
+	// not yet applied. Unset when there is no request, or the latest one has
+	// landed.
+	PendingChange *StatusChange `protobuf:"bytes,10,opt,name=pending_change,json=pendingChange" json:"pending_change,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -137,6 +244,85 @@ func (x *Article) GetDisabled() bool {
 	return false
 }
 
+func (x *Article) GetPendingChange() *StatusChange {
+	if x != nil {
+		return x.PendingChange
+	}
+	return nil
+}
+
+// A status change an editor asked for. Being accepted only means the change
+// was published to the queue, not that it has been applied.
+type StatusChange struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Also the trace_id on the queue message, so one change can be followed
+	// through our logs and the consumer's.
+	TraceId       *string                `protobuf:"bytes,1,opt,name=trace_id,json=traceId" json:"trace_id,omitempty"`
+	Action        *ArticleStatusAction   `protobuf:"varint,2,opt,name=action,enum=sliide.services.articles.api.ArticleStatusAction" json:"action,omitempty"`
+	RequestedAt   *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=requested_at,json=requestedAt" json:"requested_at,omitempty"`
+	State         *StatusChangeState     `protobuf:"varint,4,opt,name=state,enum=sliide.services.articles.api.StatusChangeState" json:"state,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *StatusChange) Reset() {
+	*x = StatusChange{}
+	mi := &file_article_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *StatusChange) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*StatusChange) ProtoMessage() {}
+
+func (x *StatusChange) ProtoReflect() protoreflect.Message {
+	mi := &file_article_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use StatusChange.ProtoReflect.Descriptor instead.
+func (*StatusChange) Descriptor() ([]byte, []int) {
+	return file_article_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *StatusChange) GetTraceId() string {
+	if x != nil && x.TraceId != nil {
+		return *x.TraceId
+	}
+	return ""
+}
+
+func (x *StatusChange) GetAction() ArticleStatusAction {
+	if x != nil && x.Action != nil {
+		return *x.Action
+	}
+	return ArticleStatusAction_ARTICLE_STATUS_ACTION_UNSPECIFIED
+}
+
+func (x *StatusChange) GetRequestedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.RequestedAt
+	}
+	return nil
+}
+
+func (x *StatusChange) GetState() StatusChangeState {
+	if x != nil && x.State != nil {
+		return *x.State
+	}
+	return StatusChangeState_STATUS_CHANGE_STATE_UNSPECIFIED
+}
+
 type ArticleDetails struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Article       *Article               `protobuf:"bytes,1,opt,name=article" json:"article,omitempty"`
@@ -147,7 +333,7 @@ type ArticleDetails struct {
 
 func (x *ArticleDetails) Reset() {
 	*x = ArticleDetails{}
-	mi := &file_article_proto_msgTypes[1]
+	mi := &file_article_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -159,7 +345,7 @@ func (x *ArticleDetails) String() string {
 func (*ArticleDetails) ProtoMessage() {}
 
 func (x *ArticleDetails) ProtoReflect() protoreflect.Message {
-	mi := &file_article_proto_msgTypes[1]
+	mi := &file_article_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -172,7 +358,7 @@ func (x *ArticleDetails) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ArticleDetails.ProtoReflect.Descriptor instead.
 func (*ArticleDetails) Descriptor() ([]byte, []int) {
-	return file_article_proto_rawDescGZIP(), []int{1}
+	return file_article_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *ArticleDetails) GetArticle() *Article {
@@ -193,7 +379,7 @@ var File_article_proto protoreflect.FileDescriptor
 
 const file_article_proto_rawDesc = "" +
 	"\n" +
-	"\rarticle.proto\x12\x1csliide.services.articles.api\x1a\x1fgoogle/protobuf/timestamp.proto\"\x8f\x02\n" +
+	"\rarticle.proto\x12\x1csliide.services.articles.api\x1a\x1fgoogle/protobuf/timestamp.proto\"\xe2\x02\n" +
 	"\aArticle\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x14\n" +
 	"\x05title\x18\x02 \x01(\tR\x05title\x12\x18\n" +
@@ -204,10 +390,25 @@ const file_article_proto_rawDesc = "" +
 	"\x06source\x18\x06 \x01(\tR\x06source\x12\x1a\n" +
 	"\bcategory\x18\a \x01(\tR\bcategory\x12=\n" +
 	"\fpublished_at\x18\b \x01(\v2\x1a.google.protobuf.TimestampR\vpublishedAt\x12\x1a\n" +
-	"\bdisabled\x18\t \x01(\bR\bdisabled\"e\n" +
+	"\bdisabled\x18\t \x01(\bR\bdisabled\x12Q\n" +
+	"\x0epending_change\x18\n" +
+	" \x01(\v2*.sliide.services.articles.api.StatusChangeR\rpendingChange\"\xfa\x01\n" +
+	"\fStatusChange\x12\x19\n" +
+	"\btrace_id\x18\x01 \x01(\tR\atraceId\x12I\n" +
+	"\x06action\x18\x02 \x01(\x0e21.sliide.services.articles.api.ArticleStatusActionR\x06action\x12=\n" +
+	"\frequested_at\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\vrequestedAt\x12E\n" +
+	"\x05state\x18\x04 \x01(\x0e2/.sliide.services.articles.api.StatusChangeStateR\x05state\"e\n" +
 	"\x0eArticleDetails\x12?\n" +
 	"\aarticle\x18\x01 \x01(\v2%.sliide.services.articles.api.ArticleR\aarticle\x12\x12\n" +
-	"\x04body\x18\x02 \x01(\tR\x04bodyBAZ?github.com/sliide/articles-backend/pkg/articles/api;articlesapib\beditionsp\xe8\a"
+	"\x04body\x18\x02 \x01(\tR\x04body*\x81\x01\n" +
+	"\x13ArticleStatusAction\x12%\n" +
+	"!ARTICLE_STATUS_ACTION_UNSPECIFIED\x10\x00\x12!\n" +
+	"\x1dARTICLE_STATUS_ACTION_DISABLE\x10\x01\x12 \n" +
+	"\x1cARTICLE_STATUS_ACTION_ENABLE\x10\x02*z\n" +
+	"\x11StatusChangeState\x12#\n" +
+	"\x1fSTATUS_CHANGE_STATE_UNSPECIFIED\x10\x00\x12\x1f\n" +
+	"\x1bSTATUS_CHANGE_STATE_PENDING\x10\x01\x12\x1f\n" +
+	"\x1bSTATUS_CHANGE_STATE_OVERDUE\x10\x02BAZ?github.com/sliide/articles-backend/pkg/articles/api;articlesapib\beditionsp\xe8\a"
 
 var (
 	file_article_proto_rawDescOnce sync.Once
@@ -221,20 +422,28 @@ func file_article_proto_rawDescGZIP() []byte {
 	return file_article_proto_rawDescData
 }
 
-var file_article_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
+var file_article_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
+var file_article_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
 var file_article_proto_goTypes = []any{
-	(*Article)(nil),               // 0: sliide.services.articles.api.Article
-	(*ArticleDetails)(nil),        // 1: sliide.services.articles.api.ArticleDetails
-	(*timestamppb.Timestamp)(nil), // 2: google.protobuf.Timestamp
+	(ArticleStatusAction)(0),      // 0: sliide.services.articles.api.ArticleStatusAction
+	(StatusChangeState)(0),        // 1: sliide.services.articles.api.StatusChangeState
+	(*Article)(nil),               // 2: sliide.services.articles.api.Article
+	(*StatusChange)(nil),          // 3: sliide.services.articles.api.StatusChange
+	(*ArticleDetails)(nil),        // 4: sliide.services.articles.api.ArticleDetails
+	(*timestamppb.Timestamp)(nil), // 5: google.protobuf.Timestamp
 }
 var file_article_proto_depIdxs = []int32{
-	2, // 0: sliide.services.articles.api.Article.published_at:type_name -> google.protobuf.Timestamp
-	0, // 1: sliide.services.articles.api.ArticleDetails.article:type_name -> sliide.services.articles.api.Article
-	2, // [2:2] is the sub-list for method output_type
-	2, // [2:2] is the sub-list for method input_type
-	2, // [2:2] is the sub-list for extension type_name
-	2, // [2:2] is the sub-list for extension extendee
-	0, // [0:2] is the sub-list for field type_name
+	5, // 0: sliide.services.articles.api.Article.published_at:type_name -> google.protobuf.Timestamp
+	3, // 1: sliide.services.articles.api.Article.pending_change:type_name -> sliide.services.articles.api.StatusChange
+	0, // 2: sliide.services.articles.api.StatusChange.action:type_name -> sliide.services.articles.api.ArticleStatusAction
+	5, // 3: sliide.services.articles.api.StatusChange.requested_at:type_name -> google.protobuf.Timestamp
+	1, // 4: sliide.services.articles.api.StatusChange.state:type_name -> sliide.services.articles.api.StatusChangeState
+	2, // 5: sliide.services.articles.api.ArticleDetails.article:type_name -> sliide.services.articles.api.Article
+	6, // [6:6] is the sub-list for method output_type
+	6, // [6:6] is the sub-list for method input_type
+	6, // [6:6] is the sub-list for extension type_name
+	6, // [6:6] is the sub-list for extension extendee
+	0, // [0:6] is the sub-list for field type_name
 }
 
 func init() { file_article_proto_init() }
@@ -247,13 +456,14 @@ func file_article_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_article_proto_rawDesc), len(file_article_proto_rawDesc)),
-			NumEnums:      0,
-			NumMessages:   2,
+			NumEnums:      2,
+			NumMessages:   3,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
 		GoTypes:           file_article_proto_goTypes,
 		DependencyIndexes: file_article_proto_depIdxs,
+		EnumInfos:         file_article_proto_enumTypes,
 		MessageInfos:      file_article_proto_msgTypes,
 	}.Build()
 	File_article_proto = out.File

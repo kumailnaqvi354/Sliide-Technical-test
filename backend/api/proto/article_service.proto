@@ -9,6 +9,15 @@ option go_package = "github.com/sliide/articles-backend/pkg/articles/api;article
 service ArticleAPI {
   rpc GetArticles(GetArticlesRequest) returns (GetArticlesResponse);
   rpc GetArticleDetails(GetArticleDetailsRequest) returns (GetArticleDetailsResponse);
+
+  // Asks for an article to be disabled or enabled. The change is applied
+  // asynchronously by another service, so success means only that it was
+  // accepted: watch Article.pending_change to see it land.
+  //
+  // Returns the pending change unchanged if the same action is already in
+  // flight. Fails with FAILED_PRECONDITION if the article is already in the
+  // requested state, or the opposite change is still pending.
+  rpc RequestArticleStatusChange(RequestArticleStatusChangeRequest) returns (RequestArticleStatusChangeResponse);
 }
 
 // Empty for now, rather than google.protobuf.Empty, so fields can be added
@@ -25,4 +34,13 @@ message GetArticleDetailsRequest {
 
 message GetArticleDetailsResponse {
   ArticleDetails article = 1;
+}
+
+message RequestArticleStatusChangeRequest {
+  string id = 1;
+  ArticleStatusAction action = 2;
+}
+
+message RequestArticleStatusChangeResponse {
+  StatusChange status_change = 1;
 }

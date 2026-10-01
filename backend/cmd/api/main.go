@@ -42,7 +42,7 @@ func main() {
 	}
 
 	server := grpc.NewServer()
-	api.RegisterArticleAPIServer(server, articles.NewService(articles.NewRepository(db)))
+	api.RegisterArticleAPIServer(server, articles.NewService(articles.NewRepository(db), publisher))
 	reflection.Register(server)
 
 	go func() {

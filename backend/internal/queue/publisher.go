@@ -34,8 +34,8 @@ func (p *Publisher) QueueURL() string {
 // Publish sends a message to the queue. The queue is drained by a service we do
 // not own, so a nil error means the queue accepted the message and nothing more:
 // it does not mean the change has been applied.
-func (p *Publisher) Publish(body string) error {
-	_, err := p.client.SendMessage(context.Background(), &sqs.SendMessageInput{
+func (p *Publisher) Publish(ctx context.Context, body string) error {
+	_, err := p.client.SendMessage(ctx, &sqs.SendMessageInput{
 		QueueUrl:    aws.String(p.queueURL),
 		MessageBody: aws.String(body),
 	})
