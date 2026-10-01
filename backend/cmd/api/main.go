@@ -2,7 +2,7 @@ package main
 
 import (
 	"context"
-	"fmt"
+	"log/slog"
 	"net"
 	"os"
 	"os/signal"
@@ -36,24 +36,32 @@ func main() {
 // returning the process exit code. It is separate from main so deferred
 // cleanup runs before the process exits.
 func run() int {
+	logger, unknownLevel := newLogger(os.Stdout, os.Getenv("LOG_LEVEL"))
+	if unknownLevel {
+		logger.Warn("unknown LOG_LEVEL, using info", "log_level", os.Getenv("LOG_LEVEL"))
+	}
+	// Also routes the standard log package through it, so libraries that use
+	// it, such as goose, log structured lines too.
+	slog.SetDefault(logger)
+
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 
 	db, err := database.Open(databaseURL)
 	if err != nil {
-		fmt.Println("could not open the database:", err)
+		logger.Error("could not open the database", "error", err)
 		return 1
 	}
 
 	// Closed last, once in-flight calls that might still use it have drained.
 	defer func() {
 		if err := db.Close(); err != nil {
-			fmt.Println("could not close the database:", err)
+			logger.Error("could not close the database", "error", err)
 		}
 	}()
 
 	if err := database.Migrate(db); err != nil {
-		fmt.Println("could not run migrations:", err)
+		logger.Error("could not run migrations", "error", err)
 		return 1
 	}
 
@@ -61,12 +69,12 @@ func run() int {
 
 	listener, err := net.Listen("tcp", listenAddr)
 	if err != nil {
-		fmt.Println("could not listen on", listenAddr, err)
+		logger.Error("could not listen", "addr", listenAddr, "error", err)
 		return 1
 	}
 
 	server := grpc.NewServer()
-	api.RegisterArticleAPIServer(server, articles.NewService(articles.NewRepository(db), publisher))
+	api.RegisterArticleAPIServer(server, articles.NewService(articles.NewRepository(db), publisher, logger))
 	reflection.Register(server)
 
 	serveErr := make(chan error, 1)
@@ -74,28 +82,27 @@ func run() int {
 		serveErr <- server.Serve(listener)
 	}()
 
-	fmt.Println("api listening on", listenAddr)
-	fmt.Println("article status changes go to", publisher.QueueURL())
+	logger.Info("api listening", "addr", listenAddr, "queue_url", publisher.QueueURL())
 
 	exitCode := 0
 
 	select {
 	case <-ctx.Done():
-		fmt.Println("shutting down, waiting up to", shutdownTimeout, "for in-flight calls")
+		logger.Info("shutting down, draining in-flight calls", "timeout", shutdownTimeout.String())
 	case err := <-serveErr:
 		// Without this the process would stay up, looking healthy, while
 		// serving nothing. Exiting non-zero lets the orchestrator restart it.
-		fmt.Println("server stopped unexpectedly:", err)
+		logger.Error("server stopped unexpectedly", "error", err)
 		exitCode = 1
 	}
 
 	if shutdown(server, shutdownTimeout) {
-		fmt.Println("in-flight calls did not finish within", shutdownTimeout, "so they were cut off")
+		logger.Warn("in-flight calls did not finish in time and were cut off", "timeout", shutdownTimeout.String())
 	} else {
-		fmt.Println("all in-flight calls finished")
+		logger.Info("all in-flight calls finished")
 	}
 
-	fmt.Println("shutdown complete")
+	logger.Info("shutdown complete", "exit_code", exitCode)
 
 	return exitCode
 }

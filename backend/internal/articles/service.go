@@ -35,16 +35,19 @@ type Service struct {
 
 	repository *Repository
 	publisher  Publisher
+	logger     *slog.Logger
 	now        func() time.Time
 }
 
-func NewService(repository *Repository, publisher Publisher) *Service {
-	return &Service{repository: repository, publisher: publisher, now: time.Now}
+func NewService(repository *Repository, publisher Publisher, logger *slog.Logger) *Service {
+	return &Service{repository: repository, publisher: publisher, logger: logger, now: time.Now}
 }
 
-func (s *Service) GetArticles(_ context.Context, _ *api.GetArticlesRequest) (*api.GetArticlesResponse, error) {
+func (s *Service) GetArticles(ctx context.Context, _ *api.GetArticlesRequest) (*api.GetArticlesResponse, error) {
 	found, err := s.repository.List()
 	if err != nil {
+		s.logger.ErrorContext(ctx, "could not list articles", "error", err)
+
 		return nil, err
 	}
 
@@ -57,12 +60,14 @@ func (s *Service) GetArticles(_ context.Context, _ *api.GetArticlesRequest) (*ap
 	return response, nil
 }
 
-func (s *Service) GetArticleDetails(_ context.Context, req *api.GetArticleDetailsRequest) (*api.GetArticleDetailsResponse, error) {
+func (s *Service) GetArticleDetails(ctx context.Context, req *api.GetArticleDetailsRequest) (*api.GetArticleDetailsResponse, error) {
 	details, err := s.repository.Get(req.GetId())
 	if errors.Is(err, ErrNotFound) {
 		return nil, status.Error(codes.NotFound, "article not found")
 	}
 	if err != nil {
+		s.logger.ErrorContext(ctx, "could not get article", "article_id", req.GetId(), "error", err)
+
 		return nil, err
 	}
 
@@ -94,18 +99,18 @@ func (s *Service) RequestArticleStatusChange(ctx context.Context, req *api.Reque
 	case errors.Is(err, ErrAlreadyInState), errors.Is(err, ErrChangeInProgress):
 		return nil, status.Error(codes.FailedPrecondition, err.Error())
 	case errors.As(err, &publishErr):
-		slog.ErrorContext(ctx, "could not publish article status change",
+		s.logger.ErrorContext(ctx, "could not publish article status change",
 			"article_id", req.GetId(), "action", action, "error", err)
 
 		return nil, status.Error(codes.Unavailable, "could not send the change, please try again")
 	case err != nil:
-		slog.ErrorContext(ctx, "could not request article status change",
+		s.logger.ErrorContext(ctx, "could not request article status change",
 			"article_id", req.GetId(), "action", action, "error", err)
 
 		return nil, status.Error(codes.Internal, "could not request the change")
 	}
 
-	slog.InfoContext(ctx, "article status change requested",
+	s.logger.InfoContext(ctx, "article status change requested",
 		"trace_id", request.ID, "article_id", request.ArticleID, "action", request.Action, "new", created)
 
 	return &api.RequestArticleStatusChangeResponse{
